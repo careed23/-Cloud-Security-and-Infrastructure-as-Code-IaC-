@@ -1,4 +1,5 @@
 🔒 Staff-Level Cloud Security Reference Architecture: IaC & Policy as Code 🚀
+
 [![Cloud Platform](https://img.shields.io/badge/Cloud-AWS%2FGCP-blue?style=flat-square)]()
 [![IaC/PaC Tools](https://img.shields.io/badge/IaC%2FPaC-Terraform%2FRego-000000?style=flat-square)]()
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)]()
