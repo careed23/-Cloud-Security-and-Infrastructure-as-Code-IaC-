@@ -10,7 +10,7 @@ This repository contains a secure, production-ready baseline for cloud infrastru
 
 <kbd>Cloud: AWS/GCP</kbd> <kbd>IaC: Terraform/Rego</kbd> <kbd>License: MIT</kbd> <kbd>Maintainer: @careed23</kbd>
 
-💡 Core Security Philosophy
+![Cloud](https://img.shields.io/badge/Cloud-AWS%2FGCP-orange)
 
 This architecture demonstrates a comprehensive approach to securing a cloud environment by enforcing security and compliance proactively at creation time (IaC) and reactively at deployment time (PaC). This dual-layered governance model ensures security is intrinsic, not external, to the development lifecycle.
 
