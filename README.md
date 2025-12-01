@@ -2,27 +2,15 @@
 
 This repository contains a secure, production-ready baseline for cloud infrastructure, demonstrating the ability to define and enforce organizational security standards through code.
 
-📊 Project Stats
-
-Technology
-
-License
-
-Maintainer
-
-Terraform/Rego
-
-MIT
-
-@careed23
+Cloud: AWS/GCP IaC: Terraform/Rego License: MIT Maintainer: @careed23
 
 💡 Core Security Philosophy
 
-This architecture demonstrates a comprehensive approach to securing a cloud environment by enforcing security and compliance proactively at creation time (IaC) and reactively at deployment time (PaC).
+This architecture demonstrates a comprehensive approach to securing a cloud environment by enforcing security and compliance proactively at creation time (IaC) and reactively at deployment time (PaC). This dual-layered governance model ensures security is intrinsic, not external, to the development lifecycle.
 
 1. Secure Reference Architecture (AWS Landing Zone) ☁️
 
-The Terraform configuration defines a Secure Landing Zone, which is a mandated baseline that all applications must inherit.
+The Terraform configuration defines a Secure Landing Zone—a non-negotiable, mandated baseline that all applications must inherit to ensure foundational security and compliance.
 
 Component Breakdown
 
@@ -32,23 +20,23 @@ Component
 
 Networking (VPC & Subnets)
 
-The use of only Private Subnets for compute resources ensures workloads are not directly exposed to the internet, prioritizing isolation. (Defense-in-Depth)
+The use of only Private Subnets for compute resources ensures workloads are shielded from direct public exposure, prioritizing isolation and minimizing the attack surface. (Defense-in-Depth)
 
 Centralized Auditing (CloudTrail/S3/CloudWatch)
 
-All API activity is logged globally and written to an immutable, encrypted S3 bucket and streamed to CloudWatch. This ensures non-repudiation and provides real-time monitoring for security anomalies.
+All API activity is logged globally, encrypted, and stored in an immutable S3 bucket, streamed to CloudWatch for real-time security monitoring and anomaly detection. This ensures non-repudiation.
 
 Least Privilege IAM
 
-The SecureComputeRole is defined with an explicit, minimal compute_policy. This prevents lateral movement by adhering strictly to the Principle of Least Privilege.
+The SecureComputeRole is defined with an explicit, minimal compute_policy granting only the permissions absolutely necessary for the application's function. This strictly enforces the Principle of Least Privilege, preventing lateral movement.
 
 Staff-Level Impact (IaC):
 
-🎯 Defining this single source of truth for IaC prevents decentralized, insecure deployments and drastically lowers the blast radius of misconfigurations across the organization. This establishes a high-bar organizational security baseline.
+🎯 Defining this single source of truth for IaC prevents the decentralized creation of shadow IT and insecure deployments. This massively lowers the blast radius of misconfigurations and establishes a high-bar organizational security baseline across all environments.
 
 2. Admission Controller / Policy as Code (PaC) ⚙️
 
-The Rego policy (OPA) acts as a mandatory security gate in the deployment pipeline, operating before a resource is committed to the API server.
+The Rego policy (OPA) is implemented as a Kubernetes Admission Controller, acting as a mandatory security gate in the deployment pipeline. It evaluates resource requests before they are committed to the cluster API server.
 
 Policy Enforcement
 
@@ -58,16 +46,15 @@ Policy
 
 deny_root_user
 
-Enforces the critical standard that processes inside containers must not run with root privileges. This is a fundamental defense-in-depth measure to prevent privilege escalation upon container compromise.
+Enforces the container security standard that processes must not run with root privileges (runAsUser: 0). This is crucial for preventing privilege escalation if the container is exploited.
 
 deny_latest_tag
 
-Forcing the use of immutable, versioned tags (e.g., v1.2.3) ensures that deployments are auditable and reproducible (secure rollbacks are guaranteed). The :latest tag is mutable and non-deterministic.
+The :latest tag is mutable and non-deterministic. This policy forces the use of immutable, versioned tags (e.g., v1.2.3), ensuring that deployments are auditable and reproducible for security reviews and fast, guaranteed rollbacks.
 
 Staff-Level Impact (PaC):
 
-⏩ This demonstrates the ability to translate high-level security requirements directly into executable, enforced policies at the deployment level, shifting security left into the CI/CD process and enforcing standards across all teams.                    <h3 class="font-semibold text-lg text-indigo-400 mb-2">Networking (VPC & Subnets)</h3>
-                    <p class="text-sm text-gray-400">
+⏩ This demonstrates the ability to translate high-level security requirements into immediate, executable, and enforced policies at the deployment level. It successfully achieves "shifting security left" by stopping risks before they ever enter the production environment.                    <p class="text-sm text-gray-400">
                         <span class="font-medium text-white">Security Rationale:</span> The use of only **Private Subnets** for compute resources ensures workloads are not directly exposed to the internet, prioritizing isolation.
                     </p>
                 </div>
