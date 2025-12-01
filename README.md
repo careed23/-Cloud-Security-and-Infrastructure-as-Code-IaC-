@@ -1,63 +1,76 @@
-# 🚀 Staff-Level Cloud Security Reference Architecture: IaC & Policy as Code
+# 🔒 Staff-Level Cloud Security Reference Architecture: IaC & Policy as Code 🚀
 
-[![Cloud Platform](https://img.shields.io/badge/Cloud-AWS%2FGCP-blue?style=flat-square)]()
-[![IaC/PaC Tools](https://img.shields.io/badge/IaC%2FPaC-Terraform%2FRego-000000?style=flat-square)]()
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)]()
-[![Maintainer](https://img.shields.io/badge/Maintainer-@careed23-purple?style=flat-square)]()
-<br>
+![Cloud](https://img.shields.io/badge/Cloud-AWS%2FGCP-orange) 
+![IaC](https://img.shields.io/badge/IaC-Terraform%2FPaC-blue) 
+![Rego](https://img.shields.io/badge/Policy%20as%20Code-Rego-informational)
+![License](https://img.shields.io/badge/License-MIT-green) 
+![Maintainer](https://img.shields.io/badge/Maintainer-%40careed23-purple)
 
-This repository contains a secure, production-ready baseline for cloud infrastructure, demonstrating the ability to define and enforce organizational security standards through code.
+This repository contains a secure, production-ready baseline for cloud infrastructure, demonstrating the ability to **define and enforce organizational security standards through code.**
 
-<kbd>Cloud: AWS/GCP</kbd> <kbd>IaC: Terraform/Rego</kbd> <kbd>License: MIT</kbd> <kbd>Maintainer: @careed23</kbd>
+---
 
-![Cloud](https://img.shields.io/badge/Cloud-AWS%2FGCP-orange)
+## 📖 Table of Contents
 
-This architecture demonstrates a comprehensive approach to securing a cloud environment by enforcing security and compliance proactively at creation time (IaC) and reactively at deployment time (PaC). This dual-layered governance model ensures security is intrinsic, not external, to the development lifecycle.
+* [Core Security Philosophy](#core-security-philosophy)
+    * [1. Secure Reference Architecture (AWS Landing Zone)](#1-secure-reference-architecture-aws-landing-zone)
+        * [Component Breakdown](#component-breakdown)
+* [Security Rationale](#security-rationale)
+    * [Networking (VPC & Subnets)](#networking-vpc--subnets)
+    * [Centralized Auditing](#centralized-auditing)
+    * [Least Privilege IAM](#least-privilege-iam)
+* [Installation](#installation) *(Placeholder - Add this section below)*
+* [Usage Examples](#usage-examples) *(Placeholder - Add this section below)*
 
-1. Secure Reference Architecture (AWS Landing Zone) ☁️
+---
 
-The Terraform configuration defines a Secure Landing Zone—a non-negotiable, mandated baseline that all applications must inherit to ensure foundational security and compliance.
+## 💡 Core Security Philosophy
 
-Component Breakdown
+This architecture demonstrates a comprehensive approach to securing a cloud environment by enforcing security and compliance **proactively** at creation time (IaC) and **reactively** at deployment time (PaC). This dual-layered governance model ensures security is intrinsic, not external, to the development lifecycle.
 
-Component
+### 1. Secure Reference Architecture (AWS Landing Zone)
 
-🛡️ Security Rationale
+The Terraform configuration defines a **Secure Landing Zone**—a non-negotiable, mandated baseline that all applications must inherit to ensure foundational security and compliance.
 
-Networking (VPC & Subnets)
+#### Component Breakdown
 
-The use of only Private Subnets for compute resources ensures workloads are shielded from direct public exposure, prioritizing isolation and minimizing the attack surface. (Defense-in-Depth)
+*(Add more details on components here, perhaps a table or bullet points)*
 
-Centralized Auditing (CloudTrail/S3/CloudWatch)
+---
+
+## 🛡️ Security Rationale
+
+### Networking (VPC & Subnets)
+
+The use of **Only Private Subnets** for compute resources ensures workloads are shielded from direct public exposure, prioritizing isolation and minimizing the attack surface. (Defense-in-Depth)
+
+### Centralized Auditing (CloudTrail/S3/CloudWatch)
 
 All API activity is logged globally, encrypted, and stored in an immutable S3 bucket, streamed to CloudWatch for real-time security monitoring and anomaly detection. This ensures non-repudiation.
 
-Least Privilege IAM
+### Least Privilege IAM
 
-The SecureComputeRole is defined with an explicit, minimal compute_policy granting only the permissions absolutely necessary for the application's function. This strictly enforces the Principle of Least Privilege, preventing lateral movement.
+The `SecureComputeRole` is defined with an explicit, minimal compute\_policy granting only the permissions absolutely necessary for the application's function. This strictly enforces the Principle of Least Privilege, preventing lateral movement and minimizing blast radius.
+*(The text cuts off here, continue the section below)*
 
-Staff-Level Impact (IaC):
+---
 
-🎯 Defining this single source of truth for IaC prevents the decentralized creation of shadow IT and insecure deployments. This massively lowers the blast radius of misconfigurations and establishes a high-bar organizational security baseline across all environments.
+## 🛠️ Installation
 
-2. Admission Controller / Policy as Code (PaC) ⚙️
+*(Add detailed setup and installation instructions for Terraform, Rego, AWS/GCP access, etc.)*
 
-The Rego policy (OPA) is implemented as a Kubernetes Admission Controller, acting as a mandatory security gate in the deployment pipeline. It evaluates resource requests before they are committed to the cluster API server.
+## 🚀 Usage Examples
 
-Policy Enforcement
+*(Provide simple, clear examples of how to deploy the reference architecture or use the policy code.)*
 
-Policy
+---
 
-🛑 Security Rationale
+## 🤝 Contributing
 
-deny_root_user
+*(Details on how others can contribute to the repository)*
 
-Enforces the container security standard that processes must not run with root privileges (runAsUser: 0). This is crucial for preventing privilege escalation if the container is exploited.
+## ⚖️ License
 
-deny_latest_tag
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
 
-The :latest tag is mutable and non-deterministic. This policy forces the use of immutable, versioned tags (e.g., v1.2.3), ensuring that deployments are auditable and reproducible for security reviews and fast, guaranteed rollbacks.
-
-Staff-Level Impact (PaC):
-
-⏩ This demonstrates the ability to translate high-level security requirements into immediate, executable, and enforced policies at the deployment level. It successfully achieves "shifting security left" by stopping risks before they ever enter the production environment.
+---
