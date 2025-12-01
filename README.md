@@ -1,69 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff-Level Security Architecture</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom font */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Custom scrollbar for a darker aesthetic */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #111827; /* Dark background */
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #4B5563; /* Gray thumb */
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6B7280;
-        }
-    </style>
-</head>
-<body class="bg-gray-900 text-gray-200 min-h-screen p-4 sm:p-8">
+🔒 Staff-Level Cloud Security Reference Architecture: IaC & Policy as Code 🚀
 
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <header class="text-center py-6 border-b border-indigo-700/50 mb-10">
-            <h1 class="text-3xl sm:text-4xl font-extrabold text-indigo-400 tracking-tight">
-                Staff-Level Security Architecture
-            </h1>
-            <p class="mt-2 text-lg text-gray-400">
-                IaC (Infrastructure as Code) and PaC (Policy as Code) Enforcement
-            </p>
-        </header>
+This repository contains a secure, production-ready baseline for cloud infrastructure, demonstrating the ability to define and enforce organizational security standards through code.
 
-        <!-- Core Philosophy -->
-        <section class="mb-12 p-6 bg-gray-800 rounded-xl shadow-2xl shadow-indigo-900/30">
-            <p class="text-xl leading-relaxed text-gray-300">
-                This architecture demonstrates a comprehensive approach to securing a cloud environment by enforcing security and compliance
-                <span class="font-semibold text-green-400">*at creation time* (IaC)</span> and
-                <span class="font-semibold text-green-400">*at deployment time* (PaC)</span>.
-            </p>
-        </section>
+📊 Project Stats
 
-        <!-- 1. Secure Reference Architecture (IaC) -->
-        <section class="mb-12">
-            <h2 class="text-2xl sm:text-3xl font-bold mb-6 text-yellow-300 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3 text-yellow-500"><path d="M12 21c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8z"></path><path d="M12 12v4"></path><path d="M12 8h.01"></path></svg>
-                1. Secure Reference Architecture (AWS Landing Zone)
-            </h2>
-            <p class="mb-6 text-gray-400">
-                The Terraform configuration defines a **Secure Landing Zone**, a mandated baseline that all applications must inherit. 
-            </p>
+Technology
 
-            <div class="grid md:grid-cols-3 gap-6">
-                <!-- Component Card: Networking -->
-                <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 hover:border-indigo-500 transition duration-300">
-                    <h3 class="font-semibold text-lg text-indigo-400 mb-2">Networking (VPC & Subnets)</h3>
+License
+
+Maintainer
+
+Terraform/Rego
+
+MIT
+
+@careed23
+
+💡 Core Security Philosophy
+
+This architecture demonstrates a comprehensive approach to securing a cloud environment by enforcing security and compliance proactively at creation time (IaC) and reactively at deployment time (PaC).
+
+1. Secure Reference Architecture (AWS Landing Zone) ☁️
+
+The Terraform configuration defines a Secure Landing Zone, which is a mandated baseline that all applications must inherit.
+
+Component Breakdown
+
+Component
+
+🛡️ Security Rationale
+
+Networking (VPC & Subnets)
+
+The use of only Private Subnets for compute resources ensures workloads are not directly exposed to the internet, prioritizing isolation. (Defense-in-Depth)
+
+Centralized Auditing (CloudTrail/S3/CloudWatch)
+
+All API activity is logged globally and written to an immutable, encrypted S3 bucket and streamed to CloudWatch. This ensures non-repudiation and provides real-time monitoring for security anomalies.
+
+Least Privilege IAM
+
+The SecureComputeRole is defined with an explicit, minimal compute_policy. This prevents lateral movement by adhering strictly to the Principle of Least Privilege.
+
+Staff-Level Impact (IaC):
+
+🎯 Defining this single source of truth for IaC prevents decentralized, insecure deployments and drastically lowers the blast radius of misconfigurations across the organization. This establishes a high-bar organizational security baseline.
+
+2. Admission Controller / Policy as Code (PaC) ⚙️
+
+The Rego policy (OPA) acts as a mandatory security gate in the deployment pipeline, operating before a resource is committed to the API server.
+
+Policy Enforcement
+
+Policy
+
+🛑 Security Rationale
+
+deny_root_user
+
+Enforces the critical standard that processes inside containers must not run with root privileges. This is a fundamental defense-in-depth measure to prevent privilege escalation upon container compromise.
+
+deny_latest_tag
+
+Forcing the use of immutable, versioned tags (e.g., v1.2.3) ensures that deployments are auditable and reproducible (secure rollbacks are guaranteed). The :latest tag is mutable and non-deterministic.
+
+Staff-Level Impact (PaC):
+
+⏩ This demonstrates the ability to translate high-level security requirements directly into executable, enforced policies at the deployment level, shifting security left into the CI/CD process and enforcing standards across all teams.                    <h3 class="font-semibold text-lg text-indigo-400 mb-2">Networking (VPC & Subnets)</h3>
                     <p class="text-sm text-gray-400">
                         <span class="font-medium text-white">Security Rationale:</span> The use of only **Private Subnets** for compute resources ensures workloads are not directly exposed to the internet, prioritizing isolation.
                     </p>
