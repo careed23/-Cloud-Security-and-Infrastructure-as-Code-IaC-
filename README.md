@@ -57,7 +57,79 @@ The `SecureComputeRole` is defined with an explicit, minimal compute\_policy gra
 
 ## 🛠️ Installation
 
-*(Add detailed setup and installation instructions for Terraform, Rego, AWS/GCP access, etc.)*
+This project requires three main components: essential command-line tools, cloud access configuration for AWS and/or GCP, and preparation of the local repository.
+
+### 1. Essential Tools
+
+Install the following tools on your local machine to manage the Infrastructure as Code (IaC) and Policy as Code (PaC) components.
+
+| Tool | Purpose | Installation Guide |
+| :--- | :--- | :--- |
+| **Terraform** | IaC provisioning tool. | [Install Terraform on Windows, Linux, and macOS](https://phoenixnap.com/kb/how-to-install-terraform) |
+| **Open Policy Agent (OPA)** | Required for Rego policy validation. | [Install OPA](https://www.openpolicyagent.org/docs/latest/#getting-started) |
+| **AWS CLI** | Required for AWS authentication and service interaction. | [Install AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) |
+| **gcloud CLI** | Required for GCP authentication and service interaction. | [Install Google Cloud SDK](https://cloud.google.com/sdk/docs/install) |
+
+### 2. Cloud Provider Access Configuration
+
+Terraform requires environment-specific credentials to deploy resources. We recommend using **Application Default Credentials (ADC)** or role-based access for your environment.
+
+#### A. Amazon Web Services (AWS) Setup
+
+1.  **Install/Configure AWS CLI:** Ensure you have the AWS Command Line Interface installed and configured.
+2.  **Authenticate:** Run the following command and enter your AWS Access Key ID, Secret Access Key, and desired default region.
+
+    ```bash
+    aws configure
+    ```
+
+    > **Best Practice:** For continuous integration (CI/CD) environments, utilize **IAM Roles** or **IAM User credentials** with the minimum necessary permissions (Least Privilege) to enforce security policies.
+
+#### B. Google Cloud Platform (GCP) Setup
+
+1.  **Install/Configure gcloud CLI:** Ensure the Google Cloud SDK (which includes the `gcloud` CLI) is installed.
+2.  **Log in (User Authentication):** Authenticate your user credentials for Terraform to access GCP APIs using Application Default Credentials (ADC).
+
+    ```bash
+    gcloud auth application-default login
+    ```
+
+3.  **Set Project ID:** Set the target project for deployment.
+
+    ```bash
+    gcloud config set project [YOUR_GCP_PROJECT_ID]
+    ```
+
+    > **Best Practice:** For production deployments, use a **dedicated Service Account** and set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the path of the Service Account key file.
+
+### 3. Repository Preparation
+
+1.  **Clone the Repository:** Clone this project to your local machine:
+
+    ```bash
+    git clone [REPO_URL]
+    cd staff-level-cloud-security-architecture
+    ```
+
+2.  **Initialize Terraform:** Run `terraform init` inside the project directory to download the necessary cloud providers (AWS, GCP, etc.) and modules.
+
+    ```bash
+    terraform init
+    ```
+
+    > This process will also configure the backend (e.g., S3 or GCS) for storing the **Terraform State** file, which is critical for collaborative environments.
+
+---
+
+### Summary of Installation
+
+Once these steps are complete, your environment is ready to move to the **Usage Examples** section for planning and applying the infrastructure.
+
+For a general guide on getting started with Terraform installation, you can watch this video: [How to Install Terraform](https://www.youtube.com/watch?v=F_fJq98yC10).
+
+---
+
+Now that the Installation is complete, we can move on to the next main section. Would you like me to draft the **Usage Examples** section next, focusing on typical IaC and PaC workflow commands?
 
 ## 🚀 Usage Examples
 
