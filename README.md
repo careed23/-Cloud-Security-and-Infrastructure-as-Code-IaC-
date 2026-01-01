@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔒 Cloud Security Reference Architecture: IaC & Policy as Code 🚀
+# ☁️🔒 Cloud Security Reference Architecture: IaC & Policy as Code 🔒☁️
 
 ![Cloud](https://img.shields.io/badge/Cloud-AWS%2FGCP-orange?style=for-the-badge&logo=amazon-aws&logoColor=white)
 ![IaC](https://img.shields.io/badge/IaC-Terraform%2FPaC-blue?style=for-the-badge&logo=terraform&logoColor=white)
