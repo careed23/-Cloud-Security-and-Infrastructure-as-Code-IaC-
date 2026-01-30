@@ -1,0 +1,37 @@
+{
+  "request": {
+    "uid": "00000000-0000-0000-0000-000000000000",
+    "kind": {
+      "kind": "Deployment",
+      "version": "v1"
+    },
+    "object": {
+      "spec": {
+        "template": {
+          "spec": {
+            "hostNetwork": false,
+            "containers": [
+              {
+                "name": "app",
+                "image": "nginx:1.2.3",
+                "securityContext": {
+                  "runAsUser": 1000,
+                  "runAsNonRoot": true,
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "privileged": false
+                },
+                "resources": {
+                  "limits": {
+                    "cpu": "100m",
+                    "memory": "128Mi"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
