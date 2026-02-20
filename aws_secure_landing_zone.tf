@@ -61,7 +61,7 @@ variable "environment" {
 
 locals {
   tags = {
-    Project     = "iacprod"
+    Project     = "secure-landing-prod"
     Owner       = "security"
     ManagedBy   = "terraform"
     Environment = "prod"
