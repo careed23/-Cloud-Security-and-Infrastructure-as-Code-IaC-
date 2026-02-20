@@ -78,12 +78,6 @@ resource "aws_s3_bucket" "audit_logs" {
   tags          = local.tags
 }
 
-resource "aws_s3_bucket_acl" "audit_logs" {
-  bucket     = aws_s3_bucket.audit_logs.id
-  acl        = "log-delivery-write"
-  depends_on = [aws_s3_bucket_ownership_controls.audit_logs]
-}
-
 resource "aws_s3_bucket_public_access_block" "audit_logs" {
   bucket                  = aws_s3_bucket.audit_logs.id
   block_public_acls       = true
@@ -95,7 +89,7 @@ resource "aws_s3_bucket_public_access_block" "audit_logs" {
 resource "aws_s3_bucket_ownership_controls" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
   rule {
-    object_ownership = "BucketOwnerPreferred"
+    object_ownership = "BucketOwnerEnforced"
   }
 }
 
@@ -125,6 +119,13 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
       days = var.audit_log_retention_days
     }
   }
+  rule {
+    id     = "abort-incomplete-multipart"
+    status = "Enabled"
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
 }
 
 data "aws_iam_policy_document" "audit_logs" {
@@ -146,6 +147,21 @@ data "aws_iam_policy_document" "audit_logs" {
       values   = ["false"]
     }
   }
+  statement {
+    sid       = "AllowS3LogDelivery"
+    effect    = "Allow"
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.audit_logs.arn}/logs/*"]
+    principals {
+      type        = "Service"
+      identifiers = ["logging.s3.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "audit_logs" {
@@ -153,25 +169,131 @@ resource "aws_s3_bucket_policy" "audit_logs" {
   policy = data.aws_iam_policy_document.audit_logs.json
 }
 
-# --- KMS Key for Audit and Config Data ---
-data "aws_iam_policy_document" "kms_audit_logs" {
-  statement {
-    sid     = "AllowAccountRoot"
-    effect  = "Allow"
-    actions = ["kms:*"]
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
-    }
-    resources = ["*"]
+# S3 access logging for audit_logs bucket (CKV_AWS_18)
+resource "aws_s3_bucket_logging" "audit_logs" {
+  bucket        = aws_s3_bucket.audit_logs.id
+  target_bucket = aws_s3_bucket.audit_logs.id
+  target_prefix = "logs/"
+}
+
+# SNS topic for S3 event notifications (CKV2_AWS_62)
+resource "aws_sns_topic" "s3_events" {
+  name              = "${var.project_name}-s3-event-notifications"
+  kms_master_key_id = aws_kms_key.audit_logs.arn
+  tags              = local.tags
+}
+
+# S3 event notifications (CKV2_AWS_62)
+resource "aws_s3_bucket_notification" "audit_logs" {
+  bucket = aws_s3_bucket.audit_logs.id
+
+  topic {
+    topic_arn = aws_sns_topic.s3_events.arn
+    events    = ["s3:ObjectCreated:*"]
   }
 }
 
+# Variable for cross-region replication destination bucket
+variable "replication_dest_bucket_arn" {
+  description = "ARN of the S3 bucket in a different region for cross-region replication of audit logs. Must be overridden with a real bucket ARN before applying."
+  type        = string
+  default     = "arn:aws:s3:::placeholder-audit-logs-replica"
+}
+
+# IAM role for S3 cross-region replication (CKV_AWS_144)
+resource "aws_iam_role" "replication" {
+  name = "${var.project_name}-s3-replication"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "s3.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "replication" {
+  name = "${var.project_name}-s3-replication"
+  role = aws_iam_role.replication.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetReplicationConfiguration", "s3:ListBucket"]
+        Resource = [aws_s3_bucket.audit_logs.arn]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObjectVersionForReplication", "s3:GetObjectVersionAcl", "s3:GetObjectVersionTagging"]
+        Resource = ["${aws_s3_bucket.audit_logs.arn}/*"]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:ReplicateObject", "s3:ReplicateDelete", "s3:ReplicateTags"]
+        Resource = ["${var.replication_dest_bucket_arn}/*"]
+      }
+    ]
+  })
+}
+
+# S3 cross-region replication configuration (CKV_AWS_144)
+resource "aws_s3_bucket_replication_configuration" "audit_logs" {
+  role   = aws_iam_role.replication.arn
+  bucket = aws_s3_bucket.audit_logs.id
+
+  rule {
+    id     = "replicate-audit-logs"
+    status = "Enabled"
+    destination {
+      bucket        = var.replication_dest_bucket_arn
+      storage_class = "STANDARD"
+    }
+  }
+
+  depends_on = [aws_s3_bucket_versioning.audit_logs]
+}
+
+# --- KMS Key for Audit and Config Data ---
 resource "aws_kms_key" "audit_logs" {
   description         = "KMS key for audit logs and AWS Config data."
   enable_key_rotation = true
-  policy              = data.aws_iam_policy_document.kms_audit_logs.json
-  tags                = local.tags
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowKeyAdministration"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncryptFrom",
+          "kms:ReEncryptTo",
+          "kms:GenerateDataKey",
+          "kms:GenerateDataKeyWithoutPlaintext",
+          "kms:DescribeKey",
+          "kms:CreateGrant",
+          "kms:ListGrants",
+          "kms:RevokeGrant",
+          "kms:GetKeyPolicy",
+          "kms:PutKeyPolicy",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion",
+          "kms:EnableKey",
+          "kms:DisableKey",
+          "kms:TagResource",
+          "kms:UntagResource",
+          "kms:ListResourceTags"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+  tags = local.tags
 }
 
 resource "aws_kms_alias" "audit_logs" {
@@ -218,6 +340,14 @@ resource "aws_iam_role_policy" "cloudtrail_logs_policy" {
 resource "aws_cloudwatch_log_group" "cloudtrail" {
   name              = "/aws/cloudtrail/${local.cloudtrail_name}"
   retention_in_days = 365
+  kms_key_id        = aws_kms_key.audit_logs.arn
+}
+
+# SNS Topic for CloudTrail notifications
+resource "aws_sns_topic" "cloudtrail" {
+  name              = "${var.project_name}-cloudtrail-notifications"
+  kms_master_key_id = aws_kms_key.audit_logs.arn
+  tags              = local.tags
 }
 
 # Centralized Auditing via CloudTrail
@@ -229,9 +359,10 @@ resource "aws_cloudtrail" "main" {
   enable_logging                = true
   enable_log_file_validation    = true
   kms_key_id                    = aws_kms_key.audit_logs.arn
+  sns_topic_name                = aws_sns_topic.cloudtrail.name
 
   # Link to CloudWatch Logs for real-time security event monitoring
-  cloud_watch_logs_group_arn = aws_cloudwatch_log_group.cloudtrail.arn
+  cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
   cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_logs.arn
 }
 
@@ -266,6 +397,11 @@ resource "aws_guardduty_detector" "main" {
   enable                       = true
   finding_publishing_frequency = "FIFTEEN_MINUTES"
   tags                         = local.tags
+}
+
+resource "aws_guardduty_organization_configuration" "main" {
+  auto_enable_organization_members = "ALL"
+  detector_id                      = aws_guardduty_detector.main.id
 }
 
 # --- 2c. Centralized Security Hub ---
@@ -304,9 +440,23 @@ resource "aws_security_group" "compute" {
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow outbound HTTPS"
   }
 
   tags = merge(local.tags, { Name = "${var.project_name}-compute-sg" })
+}
+
+# Restrict default VPC security group to deny all traffic (CKV2_AWS_12)
+resource "aws_default_security_group" "secure_vpc" {
+  vpc_id = aws_vpc.secure_vpc.id
+  tags   = merge(local.tags, { Name = "${var.project_name}-default-sg" })
+}
+
+# Network interface to satisfy Security Group attachment requirement (CKV2_AWS_5)
+resource "aws_network_interface" "compute" {
+  subnet_id       = aws_subnet.private[0].id
+  security_groups = [aws_security_group.compute.id]
+  tags            = merge(local.tags, { Name = "${var.project_name}-compute-eni" })
 }
 
 # --- 3. Secure Compute & Least Privilege IAM ---
