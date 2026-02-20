@@ -5,6 +5,6 @@ plugin "aws" {
 }
 
 config {
-  call_module_type = "any"
+  call_module_type = "all"
   force            = false
 }
