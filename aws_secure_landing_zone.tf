@@ -64,7 +64,7 @@ locals {
     Project     = var.project_name
     Owner       = "security"
     ManagedBy   = "terraform"
-    Environment = prod
+    Environment = "prod"
   }
 }
 
