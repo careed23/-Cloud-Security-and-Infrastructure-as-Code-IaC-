@@ -73,9 +73,14 @@ locals {
 # Dedicated S3 bucket for storing all logs and audit trails (CloudTrail, VPC Flow Logs)
 resource "aws_s3_bucket" "audit_logs" {
   bucket        = "${var.project_name}-audit-logs-${data.aws_caller_identity.current.account_id}"
-  acl           = "log-delivery-write" # Required for AWS services to deliver logs
   force_destroy = false
   tags          = local.tags
+}
+
+resource "aws_s3_bucket_acl" "audit_logs" {
+  bucket     = aws_s3_bucket.audit_logs.id
+  acl        = "log-delivery-write"
+  depends_on = [aws_s3_bucket_ownership_controls.audit_logs]
 }
 
 resource "aws_s3_bucket_public_access_block" "audit_logs" {
