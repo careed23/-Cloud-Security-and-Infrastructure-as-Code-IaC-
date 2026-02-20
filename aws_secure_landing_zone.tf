@@ -206,7 +206,7 @@ resource "aws_iam_role_policy" "cloudtrail_logs_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Effect = "Allow"
+        Effect   = "Allow"
         Resource = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
       },
     ]
@@ -228,10 +228,10 @@ resource "aws_cloudtrail" "main" {
   enable_logging                = true
   enable_log_file_validation    = true
   kms_key_id                    = aws_kms_key.audit_logs.arn
-  
+
   # Link to CloudWatch Logs for real-time security event monitoring
-  cloud_watch_logs_group_arn    = aws_cloudwatch_log_group.cloudtrail.arn
-  cloud_watch_logs_role_arn     = aws_iam_role.cloudtrail_logs.arn
+  cloud_watch_logs_group_arn = aws_cloudwatch_log_group.cloudtrail.arn
+  cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_logs.arn
 }
 
 # --- 2. Isolated Networking (VPC) ---
@@ -240,7 +240,7 @@ resource "aws_vpc" "secure_vpc" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
-  tags = merge(local.tags, { Name = "${var.project_name}-vpc" })
+  tags                 = merge(local.tags, { Name = "${var.project_name}-vpc" })
 }
 
 # Private Subnets (where application compute resides, isolated from direct internet access)
@@ -249,7 +249,7 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.secure_vpc.id
   cidr_block        = cidrsubnet(aws_vpc.secure_vpc.cidr_block, 8, count.index)
   availability_zone = data.aws_availability_zones.available.names[count.index]
-  tags = merge(local.tags, { Name = "${var.project_name}-private-${count.index}" })
+  tags              = merge(local.tags, { Name = "${var.project_name}-private-${count.index}" })
 }
 
 # VPC Flow Logs to centralized audit bucket
@@ -283,7 +283,7 @@ resource "aws_securityhub_standards_subscription" "pci_dss" {
 # --- 2d. Data Classification (Macie) ---
 resource "aws_macie2_account" "main" {
   finding_publishing_frequency = "FIFTEEN_MINUTES"
-  status                      = "ENABLED"
+  status                       = "ENABLED"
 }
 
 # --- 2e. IAM Access Analysis ---
@@ -340,7 +340,7 @@ resource "aws_iam_policy" "compute_policy" {
 
 # IAM Role attached to the Compute Environment (EC2/ECS/EKS nodes)
 resource "aws_iam_role" "compute_role" {
-  name               = "SecureComputeRole"
+  name = "SecureComputeRole"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -386,7 +386,7 @@ resource "aws_config_delivery_channel" "main" {
   name           = "${var.project_name}-config-delivery"
   s3_bucket_name = aws_s3_bucket.audit_logs.bucket
   s3_key_prefix  = "config"
-  s3_kms_key_arn  = aws_kms_key.audit_logs.arn
+  s3_kms_key_arn = aws_kms_key.audit_logs.arn
   depends_on     = [aws_config_configuration_recorder.main]
 }
 
