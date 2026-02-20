@@ -438,3 +438,8 @@ data "aws_availability_zones" "available" {
 data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
+
+output "current_region" {
+  description = "The AWS region where resources are deployed"
+  value       = data.aws_region.current.name
+}
