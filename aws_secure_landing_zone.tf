@@ -60,6 +60,7 @@ variable "environment" {
 }
 
 locals {
+  cloudtrail_name = "SecurityTrail"
   tags = {
     Project     = "secure-landing-prod"
     Owner       = "security"
@@ -215,13 +216,13 @@ resource "aws_iam_role_policy" "cloudtrail_logs_policy" {
 
 # CloudWatch Log Group for CloudTrail logs (Define mandatory log retention policy)
 resource "aws_cloudwatch_log_group" "cloudtrail" {
-  name              = "/aws/cloudtrail/${aws_cloudtrail.main.name}"
+  name              = "/aws/cloudtrail/${local.cloudtrail_name}"
   retention_in_days = 365
 }
 
 # Centralized Auditing via CloudTrail
 resource "aws_cloudtrail" "main" {
-  name                          = "SecurityTrail"
+  name                          = local.cloudtrail_name
   s3_bucket_name                = aws_s3_bucket.audit_logs.id
   is_multi_region_trail         = true
   include_global_service_events = true
