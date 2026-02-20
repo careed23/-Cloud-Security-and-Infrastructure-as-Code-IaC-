@@ -1,0 +1,5 @@
+project_name             = "secure-landing-zone"
+aws_region               = "us-east-1"
+environment              = "prod"
+vpc_cidr                 = "10.0.0.0/16"
+audit_log_retention_days = 365

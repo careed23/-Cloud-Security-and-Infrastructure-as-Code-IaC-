@@ -7,6 +7,7 @@
 ![Rego](https://img.shields.io/badge/Policy%20as%20Code-Rego-informational?style=for-the-badge&logo=open-policy-agent&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 ![Maintainer](https://img.shields.io/badge/Maintainer-%40careed23-purple?style=for-the-badge&logo=github&logoColor=white)
+[![Security CI](https://github.com/careed23/-Cloud-Security-and-Infrastructure-as-Code-IaC-/actions/workflows/ci.yml/badge.svg)](https://github.com/careed23/-Cloud-Security-and-Infrastructure-as-Code-IaC-/actions/workflows/ci.yml)
 
 <br>
 
@@ -26,6 +27,7 @@
     * [Least Privilege IAM](#least-privilege-iam)
     * [Policy as Code (OPA/Rego)](#policy-as-code-oparego)
 * [Repository Layout](#repository-layout)
+* [Quick Start](#quick-start)
 * [Installation](#installation)
     * [Essential Tools](#1-essential-tools)
     * [Cloud Provider Access Configuration](#2-cloud-provider-access-configuration)
@@ -45,6 +47,18 @@ This architecture demonstrates a comprehensive approach to securing a cloud envi
 
 ### 1. Secure Reference Architecture (AWS Landing Zone)
 The Terraform configuration defines a **Secure Landing Zone**—a non-negotiable, mandated baseline that all applications must inherit to ensure foundational security and compliance.
+
+### Architecture at a Glance
+
+```mermaid
+flowchart LR
+    Dev[Developer Commit] --> CI[Security CI]
+    CI --> TF[Terraform Validation & Security Scan]
+    CI --> OPA[OPA Format & Policy Tests]
+    CI --> Secrets[Gitleaks Secret Scan]
+    TF --> AWS[AWS Secure Landing Zone]
+    OPA --> K8s[Kubernetes Admission Policy Enforcement]
+```
 
 #### Component Breakdown
 
@@ -97,7 +111,7 @@ Admission-control checks prevent risky deployments (root containers, mutable ima
 
 ---
 
-## �️ Repository Layout
+## 🗂️ Repository Layout
 
 | Path | Description |
 | :--- | :--- |
@@ -105,6 +119,33 @@ Admission-control checks prevent risky deployments (root containers, mutable ima
 | `k8s_opa_policy.rego` | OPA/Rego policies for Kubernetes admission control. |
 | `k8s_opa_policy_test.rego` | Policy unit tests for OPA. |
 | `examples/` | Example inputs for policy evaluation. |
+| `versions.tf` | Terraform CLI and AWS provider version constraints + provider region configuration. |
+| `backend.hcl.example` | Example remote-state backend configuration for secure Terraform state management. |
+| `terraform.tfvars.example` | Starter variable values for fast local onboarding. |
+| `Makefile` | Shortcut commands for Terraform, OPA, security checks, and planning. |
+| `.github/workflows/ci.yml` | CI security gates for Terraform, OPA, and secret scanning. |
+| `.pre-commit-config.yaml` | Local pre-commit checks mirroring CI quality and security gates. |
+
+---
+
+## ⚡ Quick Start
+
+```bash
+git clone [REPO_URL]
+cd -Cloud-Security-and-Infrastructure-as-Code-IaC-
+cp terraform.tfvars.example terraform.tfvars
+pre-commit install
+pre-commit run --all-files
+make help
+```
+
+Optional (recommended for real environments):
+
+```bash
+cp backend.hcl.example backend.hcl
+# edit backend.hcl values for your state bucket/table
+terraform init -backend-config=backend.hcl
+```
 
 ---
 
@@ -120,6 +161,7 @@ Install the following tools on your local machine to manage the Infrastructure a
 | **Terraform** | IaC provisioning tool. | [Install Terraform](https://phoenixnap.com/kb/how-to-install-terraform) |
 | **Open Policy Agent (OPA)** | Required for Rego policy validation. | [Install OPA](https://www.openpolicyagent.org/docs/latest/#getting-started) |
 | **AWS CLI** | Required for AWS authentication and service interaction. | [Install AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) |
+| **pre-commit** | Local enforcement of formatting, linting, policy tests, and secret scanning. | [Install pre-commit](https://pre-commit.com/#installation) |
 
 ### 2. Cloud Provider Access Configuration
 Terraform requires environment-specific credentials to deploy resources. We recommend using **IAM roles** or short-lived credentials.
@@ -138,6 +180,52 @@ Terraform requires environment-specific credentials to deploy resources. We reco
     ```bash
     terraform init
     ```
+3. **Install Git Hooks:**
+    ```bash
+    pre-commit install
+    ```
+4. **Create Local Terraform Variables:**
+    ```bash
+    cp terraform.tfvars.example terraform.tfvars
+    # edit terraform.tfvars for your project/environment
+    ```
+
+### 4. Terraform Variables and Safe Defaults
+
+This repository now enforces safer input validation for critical variables:
+
+- `project_name` naming constraints
+- `vpc_cidr` CIDR format validation
+- `audit_log_retention_days` minimum/maximum bounds
+- `environment` allowlist (`dev`, `stage`, `prod`)
+
+Example plan command with explicit region/environment:
+
+```bash
+terraform plan -var='aws_region=us-east-1' -var='environment=prod'
+```
+
+Example plan command using local variables file:
+
+```bash
+terraform plan -var-file=terraform.tfvars
+```
+
+### 5. Makefile Shortcuts
+
+List available commands:
+
+```bash
+make help
+```
+
+Common commands:
+
+```bash
+make init
+make security-checks
+make plan
+```
 
 ---
 
@@ -171,9 +259,30 @@ Integrating this architecture into a CI/CD pipeline ensures security checks (PaC
 This repository includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs automated checks on pushes and pull requests to the `main` branch.
 
 #### Automated Checks
-- **Terraform Format Check**: Ensures consistent code formatting.
-- **Terraform Validate**: Validates Terraform configuration syntax.
-- **OPA Test**: Runs unit tests for Rego policies.
+- **Terraform Format + Validate**: Ensures consistent formatting and valid Terraform syntax.
+- **TFLint**: Detects Terraform misconfigurations and AWS best-practice issues.
+- **Checkov**: Performs IaC security scanning on Terraform code.
+- **OPA Format + Test**: Enforces Rego formatting and policy unit tests.
+- **Gitleaks**: Scans for committed secrets.
+
+### Local Security Gates (Recommended Before Push)
+
+Run all configured local checks:
+
+```bash
+pre-commit run --all-files
+```
+
+Or run key checks manually:
+
+```bash
+terraform fmt -check -recursive
+terraform init -backend=false
+terraform validate -no-color
+tflint --init && tflint --recursive
+opa fmt --fail k8s_opa_policy.rego k8s_opa_policy_test.rego
+opa test . --verbose
+```
 
 ### Recommended Pipeline Gates
 1. **Static checks:** `terraform fmt -check` and `terraform validate`.
@@ -184,7 +293,7 @@ This repository includes a GitHub Actions workflow (`.github/workflows/ci.yml`) 
 ---
 
 ## 🤝 Contributing
-Contributions are welcome. Please open an issue for discussion or submit a pull request with clear context on the security objective and any compliance impact.
+Contributions are welcome. Please review [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request, and follow [`SECURITY.md`](SECURITY.md) for responsible vulnerability disclosure.
 
 ---
 

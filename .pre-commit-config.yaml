@@ -1,0 +1,33 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.97.4
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+      - id: tflint
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: opa-fmt
+        name: OPA format check
+        entry: opa fmt --fail
+        language: system
+        files: ^k8s_opa_policy(_test)?\.rego$
+
+      - id: opa-test
+        name: OPA unit tests
+        entry: opa test . --verbose
+        language: system
+        pass_filenames: false

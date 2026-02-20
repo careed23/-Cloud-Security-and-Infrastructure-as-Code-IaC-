@@ -13,25 +13,58 @@ variable "project_name" {
   description = "Short name used for tagging and resource prefixes."
   type        = string
   default     = "secure-landing-zone"
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{2,30}$", var.project_name))
+    error_message = "project_name must be 3-31 characters, start with a lowercase letter, and contain only lowercase letters, numbers, and hyphens."
+  }
 }
 
 variable "vpc_cidr" {
   description = "CIDR block for the secure VPC."
   type        = string
   default     = "10.0.0.0/16"
+
+  validation {
+    condition     = can(cidrhost(var.vpc_cidr, 0))
+    error_message = "vpc_cidr must be a valid IPv4 CIDR range (example: 10.0.0.0/16)."
+  }
 }
 
 variable "audit_log_retention_days" {
   description = "Retention period for S3 audit logs."
   type        = number
   default     = 365
+
+  validation {
+    condition     = var.audit_log_retention_days >= 90 && var.audit_log_retention_days <= 3653
+    error_message = "audit_log_retention_days must be between 90 and 3653 days."
+  }
+}
+
+variable "aws_region" {
+  description = "AWS region used by the AWS provider."
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "environment" {
+  description = "Environment label used for resource tagging."
+  type        = string
+  default     = "prod"
+
+  validation {
+    condition     = contains(["dev", "stage", "prod"], var.environment)
+    error_message = "environment must be one of: dev, stage, prod."
+  }
 }
 
 locals {
   tags = {
-    Project = var.project_name
-    Owner   = "security"
-    Managed = "terraform"
+    Project     = var.project_name
+    Owner       = "security"
+    ManagedBy   = "terraform"
+    Environment = var.environment
   }
 }
 

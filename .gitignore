@@ -1,0 +1,31 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform plans
+*.tfplan
+
+# Terraform variable files (keep example committed)
+*.tfvars
+*.auto.tfvars
+!terraform.tfvars.example
+
+# OPA / local artifacts
+*.out
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Python caches (for local tooling)
+__pycache__/
+*.pyc
