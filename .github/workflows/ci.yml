@@ -40,10 +40,9 @@ jobs:
         run: tflint --recursive
 
       - name: Checkov IaC Security Scan
-        uses: bridgecrewio/checkov-action@v12
-        with:
-          framework: terraform
-          directory: .
+        run: |
+          pip install checkov
+          checkov -d . --framework terraform --quiet
 
       - name: Setup OPA
         run: |
