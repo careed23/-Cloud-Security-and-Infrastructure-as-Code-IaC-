@@ -62,10 +62,10 @@ variable "environment" {
 locals {
   cloudtrail_name = "SecurityTrail"
   tags = {
-    Project     = "secure-landing-prod"
+    Project     = "${var.project_name}-${var.environment}"
     Owner       = "security"
     ManagedBy   = "terraform"
-    Environment = "prod"
+    Environment = var.environment
   }
 }
 
